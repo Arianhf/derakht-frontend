@@ -13,5 +13,6 @@ export const ENDPOINTS = {
     REGISTER: '/api/register/',
     USER: '/api/user/',
     STORIES: '/api/stories/',
+    GET_CSRF_TOKEN: '/api/get-csrf-token/',
 };
 

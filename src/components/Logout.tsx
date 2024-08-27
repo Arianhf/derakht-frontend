@@ -3,20 +3,18 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { apiRequest, clearAuthToken } from '@/lib/api'
-import { ENDPOINTS } from '@/config'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Logout() {
     const router = useRouter()
+    const { logout } = useAuth()
 
     const handleLogout = async () => {
         try {
-            await apiRequest(ENDPOINTS.LOGOUT, 'POST')
+            await logout()
+            router.push('/login')
         } catch (error) {
             console.error('Logout failed', error)
-        } finally {
-            clearAuthToken()
-            router.push('/login')
         }
     }
 

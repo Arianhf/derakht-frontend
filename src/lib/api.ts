@@ -1,57 +1,64 @@
 // src/lib/api.ts
 
-import { ENDPOINTS } from '@/config';
+import { ENDPOINTS } from '@/config'
+import { getCSRFToken } from './csrf'
+import { ACCESS_TOKEN_NAME } from './secureCookies'
 
-let authToken: string | null = null;
-
-export function setAuthToken(token: string) {
-    authToken = token;
-    localStorage.setItem('authToken', token);
-}
-
-export function getAuthToken(): string | null {
-    if (!authToken) {
-        authToken = localStorage.getItem('authToken');
+function getAccessToken(): string | null {
+    if (typeof window !== 'undefined') {
+        return document.cookie.split('; ').find(row => row.startsWith(ACCESS_TOKEN_NAME))?.split('=')[1] || null;
     }
-    return authToken;
-}
-
-export function clearAuthToken() {
-    authToken = null;
-    localStorage.removeItem('authToken');
+    return null;
 }
 
 export async function apiRequest(endpoint: string, method: string = 'GET', data: any = null) {
-    const url = `${ENDPOINTS.API_BASE}${endpoint}`;
-
+    const url = `${ENDPOINTS.API_BASE}${endpoint}`
+    console.log(url)
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
-    };
-
-    const token = getAuthToken();
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;  // or 'Bearer ${token}' depending on your backend expectation
     }
+
+    // Add Authorization header with Bearer token
+    const accessToken = getAccessToken();
+    if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        console.log(`Bearer ${accessToken}`)
+    }
+
+    // Add CSRF token for non-GET requests
+    if (method !== 'GET') {
+        console.log(method)
+        const csrfToken = await getCSRFToken();
+        headers['X-CSRFToken'] = csrfToken;
+    }
+    console.log("here")
 
     const options: RequestInit = {
         method,
         headers,
-    };
-
-    if (data) {
-        options.body = JSON.stringify(data);
+        credentials: 'include', // This is crucial for including cookies in the request
     }
 
-    const response = await fetch(url, options);
+    if (data) {
+        options.body = JSON.stringify(data)
+    }
+
+    const response = await fetch(url, options)
 
     if (!response.ok) {
         if (response.status === 401) {
-            clearAuthToken();
-            window.location.href = '/login';
-            throw new Error('Unauthorized. Redirecting to login.');
+            throw new Error('Unauthorized')
         }
-        throw new Error('API request failed');
+        throw new Error('API request failed')
     }
 
-    return response.json();
+    return response.json()
+}
+
+export async function login(username: string, password: string) {
+    return apiRequest(ENDPOINTS.LOGIN, 'POST', { username, password })
+}
+
+export async function logout() {
+    return apiRequest(ENDPOINTS.LOGOUT, 'POST')
 }

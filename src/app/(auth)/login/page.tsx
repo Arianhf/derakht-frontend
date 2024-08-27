@@ -3,32 +3,22 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ENDPOINTS } from '@/config'
-import {apiRequest, setAuthToken} from "@/lib/api";
+import { useAuth } from '@/contexts/AuthContext'
 
 
 export default function LoginPage() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
-    const router = useRouter()
+    const { login } = useAuth()
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setError('')
 
         try {
-            const response = await apiRequest(ENDPOINTS.LOGIN, 'POST', { username, password })
-            console.log(response)
-            console.log(response.token)
-            if (response.access) {
-                setAuthToken(response.access)
-                router.push('/dashboard')
-            } else {
-                setError('Login failed. Please try again.')
-            }
+            await login(username, password)
         } catch (err) {
             setError('Invalid username or password')
         }
