@@ -45,3 +45,11 @@ export function clearTokens(res: NextApiResponse) {
     removeSecureCookie(res, ACCESS_TOKEN_NAME)
     removeSecureCookie(res, REFRESH_TOKEN_NAME)
 }
+
+export function getAccessToken(): string | undefined {
+    if (typeof window !== 'undefined') {
+        const cookies = parse(document.cookie)
+        return cookies[ACCESS_TOKEN_NAME]
+    }
+    return undefined
+}

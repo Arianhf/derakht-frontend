@@ -1,19 +1,9 @@
-// src/lib/api.ts
-
 import { ENDPOINTS } from '@/config'
 import { getCSRFToken } from './csrf'
-import { ACCESS_TOKEN_NAME } from './secureCookies'
-
-function getAccessToken(): string | null {
-    if (typeof window !== 'undefined') {
-        return document.cookie.split('; ').find(row => row.startsWith(ACCESS_TOKEN_NAME))?.split('=')[1] || null;
-    }
-    return null;
-}
+import { getAccessToken } from './secureCookies'
 
 export async function apiRequest(endpoint: string, method: string = 'GET', data: any = null) {
     const url = `${ENDPOINTS.API_BASE}${endpoint}`
-    console.log(url)
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     }
@@ -22,16 +12,15 @@ export async function apiRequest(endpoint: string, method: string = 'GET', data:
     const accessToken = getAccessToken();
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
-        console.log(`Bearer ${accessToken}`)
+    } else {
+        throw new Error('No access token available')
     }
 
     // Add CSRF token for non-GET requests
     if (method !== 'GET') {
-        console.log(method)
         const csrfToken = await getCSRFToken();
         headers['X-CSRFToken'] = csrfToken;
     }
-    console.log("here")
 
     const options: RequestInit = {
         method,

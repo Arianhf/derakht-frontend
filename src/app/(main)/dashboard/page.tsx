@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useApiRequest } from '@/hooks/useApiRequest'
 import { ENDPOINTS } from '@/config'
+import {Simulate} from "react-dom/test-utils";
+import error = Simulate.error;
 
 interface Story {
     id: number;
@@ -40,6 +42,8 @@ export default function DashboardPage() {
         fetchStories(url)
     }, [currentPage])
 
+    console.log(userError, storiesError)
+    console.log(userData, storiesData)
     if (userLoading || storiesLoading) return <div>Loading...</div>
     if (userError || storiesError) return <div>Error: {userError || storiesError}</div>
     if (!userData || !storiesData) return <div>No data available</div>

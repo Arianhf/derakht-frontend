@@ -1,5 +1,3 @@
-// src/hooks/useApiRequest.ts
-
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiRequest } from '@/lib/api'
@@ -28,25 +26,33 @@ export function useApiRequest<T>() {
             setState({ data, loading: false, error: null })
             return data
         } catch (error) {
-            if (error instanceof Error && error.message === 'Unauthorized') {
-                try {
-                    // Try to refresh the token using the middleware
-                    await checkAuthStatus()
-                    // If successful, retry the original request
-                    const data = await apiRequest(endpoint, method, body)
-                    setState({ data, loading: false, error: null })
-                    return data
-                } catch (refreshError) {
-                    // If refresh fails, log out the user
-                    await logout()
-                    router.push('/login')
-                    setState({ data: null, loading: false, error: 'Session expired. Please log in again.' })
+            if (error instanceof Error) {
+                if (error.message === 'Unauthorized' || error.message === 'No access token available') {
+                    try {
+                        // Try to refresh the token using the middleware
+                        await checkAuthStatus()
+                        // If successful, retry the original request
+                        const data = await apiRequest(endpoint, method, body)
+                        setState({ data, loading: false, error: null })
+                        return data
+                    } catch (refreshError) {
+                        // If refresh fails, log out the user
+                        await logout()
+                        router.push('/login')
+                        setState({ data: null, loading: false, error: 'Session expired. Please log in again.' })
+                    }
+                } else {
+                    setState({
+                        data: null,
+                        loading: false,
+                        error: error.message
+                    })
                 }
             } else {
                 setState({
                     data: null,
                     loading: false,
-                    error: error instanceof Error ? error.message : 'An unknown error occurred'
+                    error: 'An unknown error occurred'
                 })
             }
             throw error
